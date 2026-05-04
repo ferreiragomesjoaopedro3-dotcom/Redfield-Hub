@@ -1,42 +1,19 @@
 --[[
-    REDFIELD HUB - UNLEASHED
-    Dev: emptyz666
-    Status: Full Power / Heavy Logic
+    REDFIELD HUB | Desenvolvedor: emptyz666
+    Estrutura para Integração Manual
+    Tecla para Abrir/Fechar: K
 ]]
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- // SERVIÇOS BRUTOS //
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local Cam = workspace.CurrentCamera
-local LP = Players.LocalPlayer
-
--- // VARIAVEIS DE CONTROLE //
-_G.AimbotMode = "Off"
-_G.FullHS = false
-_G.Wallbang = false
-_G.Prediction = 0.12
-_G.Smoothness = 0.3
-_G.FOV = 80
-
-_G.ESPEnabled = true
-_G.ESPColorMode = "Team Color"
-_G.CustomColor = Color3.fromRGB(255, 0, 0)
-_G.ShowTools = true
-
-_G.WalkSpeed = 16
-_G.JumpPower = 50
-_G.NoClip = false
-
 -- // JANELA PRINCIPAL //
 local Window = Rayfield:CreateWindow({
    Name = "Redfield Hub | Dev: emptyz666",
-   LoadingTitle = "Arara Azul Engine - Overload",
+   LoadingTitle = "Arara Azul Engine 2026",
    LoadingSubtitle = "by emptyz666",
-   ConfigurationSaving = { Enabled = true, Folder = "RedfieldData" },
-   Theme = "DarkRed" 
+   ConfigurationSaving = { Enabled = false },
+   Theme = "DarkRed", -- Deixa a UI vermelha conforme solicitado
+   Keybind = Enum.KeyCode.K -- Tecla K para sumir e aparecer
 })
 
 -- // ABAS //
@@ -44,205 +21,310 @@ local CombatTab = Window:CreateTab("Combate", 4483362458)
 local VisualTab = Window:CreateTab("Visual", 4483345998)
 local PlayerTab = Window:CreateTab("Player", 4483362458)
 
--- // COMBATE: AIMBOT & LOGIC //
+-- // CONFIGURAÇÕES (VARIÁVEIS QUE SEU SCRIPT VAI LER) //
+_G.AimbotMode = "Off"
+_G.FullHS = false
+_G.ESPEnabled = false
+_G.WS_Value = 16
+_G.JP_Value = 50
+_G.NoClipActive = false
+
+-- // FUNÇÕES DA ABA COMBATE //
+CombatTab:CreateSection("Aimbot Settings")
+
 CombatTab:CreateDropdown({
-   Name = "Modo de Mira (Lock-on)",
+   Name = "Modo de Mira",
    Options = {"Off", "Camera Lock (Mob & PC)", "Mouse Lock (Mob & PC)"},
    CurrentOption = {"Off"},
-   Callback = function(v) _G.AimbotMode = v[1] end,
+   Callback = function(v)
+      _G.AimbotMode = v[1]
+   end,
 })
 
 CombatTab:CreateToggle({
-   Name = "Forçar Cabeça (Full HS)",
+   Name = "Priorizar Cabeça (Full HS)",
    CurrentValue = false,
-   Callback = function(v) _G.FullHS = v end,
+   Callback = function(v)
+      _G.FullHS = v
+   end,
 })
 
-CombatTab:CreateToggle({
-   Name = "Ignorar Paredes (Wallbang)",
-   CurrentValue = false,
-   Callback = function(v) _G.Wallbang = v end,
-})
-
-CombatTab:CreateSlider({
-   Name = "Aimbot FOV",
-   Min = 10, Max = 800, CurrentValue = 80,
-   Callback = function(v) _G.FOV = v end,
-})
-
--- // VISUAL: ESP COMPLETO //
-VisualTab:CreateToggle({
-   Name = "Master ESP",
-   CurrentValue = true,
-   Callback = function(v) _G.ESPEnabled = v end,
-})
-
-VisualTab:CreateDropdown({
-   Name = "Esquema de Cores",
-   Options = {"Team Color", "Custom Color"},
-   CurrentOption = {"Team Color"},
-   Callback = function(v) _G.ESPColorMode = v[1] end,
-})
-
-VisualTab:CreateColorPicker({
-    Name = "Cor do ESP",
-    Color = Color3.fromRGB(255, 0, 0),
-    Callback = function(v) _G.CustomColor = v end
-})
+-- // FUNÇÕES DA ABA VISUAL //
+VisualTab:CreateSection("Visualizar Jogadores")
 
 VisualTab:CreateToggle({
-   Name = "Rastrear Itens (Tools)",
-   CurrentValue = true,
-   Callback = function(v) _G.ShowTools = v end,
+   Name = "Ativar ESP",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.ESPEnabled = v
+   end,
 })
 
--- // PLAYER: MOVIMENTAÇÃO EXTREMA //
+-- // FUNÇÕES DA ABA PLAYER //
+PlayerTab:CreateSection("Atributos")
+
 PlayerTab:CreateSlider({
    Name = "Velocidade",
-   Min = 16, Max = 500, CurrentValue = 16,
-   Callback = function(v) _G.WalkSpeed = v end,
+   Min = 16, Max = 150, CurrentValue = 16,
+   Callback = function(v)
+      _G.WS_Value = v
+   end,
 })
 
 PlayerTab:CreateSlider({
    Name = "Pulo",
-   Min = 50, Max = 1000, CurrentValue = 50,
-   Callback = function(v) _G.JumpPower = v end,
-})
-
-PlayerTab:CreateToggle({
-   Name = "Atravessar Tudo (NoClip)",
-   CurrentValue = false,
-   Callback = function(v) _G.NoClip = v end,
-})
-
-PlayerTab:CreateButton({
-   Name = "Obter Teleport Tool",
-   Callback = function()
-       local Tool = Instance.new("Tool")
-       Tool.RequiresHandle = false
-       Tool.Name = "Redfield Teleporter"
-       Tool.Activated:Connect(function()
-           local targetPos = LP:GetMouse().Hit.Position
-           if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-               LP.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
-           end
-       end)
-       Tool.Parent = LP.Backpack
+   Min = 50, Max = 300, CurrentValue = 50,
+   Callback = function(v)
+      _G.JP_Value = v
    end,
 })
 
--- // CORE LOGIC: AIMBOT (SEM COMPROMISSO) //
-local function getBestTarget()
-    local target = nil
-    local dist = _G.FOV
-    local mouse = UserInputService:GetMouseLocation()
+PlayerTab:CreateToggle({
+   Name = "Atravessar Paredes (NoClip)",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.NoClipActive = v
+   end,
+})
 
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local char = p.Character
-            local root = char.HumanoidRootPart
-            
-            -- Lógica de Wallbang (Check de Visibilidade)
-            if not _G.Wallbang then
-                local ray = Ray.new(Cam.CFrame.Position, (root.Position - Cam.CFrame.Position).Unit * 1000)
-                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LP.Character, char})
-                if hit then continue end
-            end
+PlayerTab:CreateButton({
+   Name = "Teleport Tool",
+   Callback = function()
+      local Tool = Instance.new("Tool")
+      Tool.Name = "Redfield TP Tool"
+      Tool.RequiresHandle = false 
+      Tool.Parent = game.Players.LocalPlayer.Backpack
 
-            local pos, vis = Cam:WorldToViewportPoint(root.Position)
-            if vis then
-                local magnitude = (Vector2.new(pos.X, pos.Y) - mouse).Magnitude
-                if magnitude < dist then
-                    dist = magnitude
-                    target = char
-                end
-            end
-        end
+      Tool.Activated:Connect(function()
+          local mouse = game.Players.LocalPlayer:GetMouse()
+          local character = game.Players.LocalPlayer.Character
+          
+          if character and character:FindFirstChild("HumanoidRootPart") then
+              local targetPos = mouse.Hit.p + Vector3.new(0, 3, 0)
+              character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+              
+              Rayfield:Notify({
+                  Title = "Redfield Hub",
+                  Content = "Teleportado com sucesso!",
+                  Duration = 2
+              })
+          end
+      end)
+   end,
+})
+
+---------------------------------------------------------
+-- SCRIPTS ORIGINAIS (SEM ALTERAÇÃO DE LÓGICA)
+---------------------------------------------------------
+
+-- 1. SCRIPT DE VELOCIDADE/PULO
+local RunService1 = game:GetService("RunService")
+local Players1 = game:GetService("Players")
+local LP1 = Players1.LocalPlayer
+
+RunService1.RenderStepped:Connect(function()
+    if LP1.Character and LP1.Character:FindFirstChild("Humanoid") then
+        local humanoid = LP1.Character.Humanoid
+        humanoid.WalkSpeed = _G.WS_Value
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = _G.JP_Value
     end
-    return target
-end
+end)
 
--- // LOOP DE ATUALIZAÇÃO CONSTANTE //
-RunService.RenderStepped:Connect(function()
-    -- Estatísticas do Player
-    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-        LP.Character.Humanoid.WalkSpeed = _G.WalkSpeed
-        LP.Character.Humanoid.JumpPower = _G.JumpPower
-        LP.Character.Humanoid.UseJumpPower = true
-        
-        -- NoClip Ativo (Pesado)
-        if _G.NoClip then
-            for _, v in pairs(LP.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end
-    end
+-- 2. SCRIPT DE NOCLIP
+local RunService2 = game:GetService("RunService")
+local Players2 = game:GetService("Players")
+local LP2 = Players2.LocalPlayer
 
-    -- Aimbot Execution
-    if _G.AimbotMode ~= "Off" then
-        local targetChar = getBestTarget()
-        if targetChar then
-            local part = _G.FullHS and targetChar:FindFirstChild("Head") or (math.random(1,2) == 1 and targetChar:FindFirstChild("Head") or targetChar:FindFirstChild("HumanoidRootPart"))
-            
-            if part then
-                local predicted = part.Position + (part.Velocity * _G.Prediction)
-                
-                if _G.AimbotMode == "Mouse Lock (Mob & PC)" then
-                    local screenPos = Cam:WorldToViewportPoint(predicted)
-                    local mPos = UserInputService:GetMouseLocation()
-                    if mousemoverel then
-                        mousemoverel((screenPos.X - mPos.X) * _G.Smoothness, (screenPos.Y - mPos.Y) * _G.Smoothness)
-                    end
-                elseif _G.AimbotMode == "Camera Lock (Mob & PC)" then
-                    Cam.CFrame = CFrame.new(Cam.CFrame.Position, predicted)
+RunService2.Stepped:Connect(function()
+    if _G.NoClipActive then
+        if LP2.Character then
+            for _, part in ipairs(LP2.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
                 end
             end
         end
     end
 end)
 
--- // ESP SYSTEM (DRAWING + HIGHLIGHT) //
-local function applyESP(p)
-    local highlight = Instance.new("Highlight", game:GetService("CoreGui"))
-    local label = Drawing.new("Text")
-    label.Center = true
-    label.Outline = true
-    label.Size = 14
+-- 3. SCRIPT DE CAMERA LOCK
+local fov3 = 50 
+local prediction3 = 0.12 
+local smoothness3 = 0.3 
 
-    RunService.RenderStepped:Connect(function()
-        if _G.ESPEnabled and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = p.Character.HumanoidRootPart
-            local pos, vis = Cam:WorldToViewportPoint(hrp.Position)
+local RunService3 = game:GetService("RunService")
+local Players3 = game:GetService("Players")
+local UserInputService3 = game:GetService("UserInputService")
+local Cam3 = workspace.CurrentCamera
+local LP3 = Players3.LocalPlayer
 
-            if vis then
-                highlight.Enabled = true
-                highlight.Adornee = p.Character
-                local color = (_G.ESPColorMode == "Team Color" and p.TeamColor) and p.TeamColor.Color or _G.CustomColor
-                highlight.FillColor = color
-                highlight.OutlineColor = Color3.new(1,1,1)
-                
-                label.Visible = true
-                label.Position = Vector2.new(pos.X, pos.Y - 40)
-                label.Color = color
-                
-                local tool = p.Character:FindFirstChildOfClass("Tool")
-                local info = p.Name
-                if _G.ShowTools then
-                    info = info .. "\n[" .. (tool and tool.Name or "Mãos Vazias") .. "]"
+local function getTarget3()
+    local nearest = nil
+    local shortestDist = fov3
+    local mousePos = UserInputService3:GetMouseLocation()
+
+    for _, player in ipairs(Players3:GetPlayers()) do
+        if player ~= LP3 and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local partName = _G.FullHS and "Head" or "HumanoidRootPart"
+            local root = player.Character:FindFirstChild(partName)
+            if root then
+                local pos, onScreen = Cam3:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        nearest = player.Character
+                    end
                 end
-                label.Text = info
-            else
-                highlight.Enabled = false
-                label.Visible = false
             end
+        end
+    end
+    return nearest
+end
+
+RunService3.RenderStepped:Connect(function()
+    if _G.AimbotMode ~= "Camera Lock (Mob & PC)" then return end
+
+    local targetChar = getTarget3()
+    if targetChar then
+        local partName = _G.FullHS and "Head" or "HumanoidRootPart"
+        local targetPart = targetChar:FindFirstChild(partName)
+        if targetPart then
+            local predictedPos = targetPart.Position + (targetPart.Velocity * prediction3)
+            local targetCFrame = CFrame.new(Cam3.CFrame.Position, predictedPos)
+            Cam3.CFrame = Cam3.CFrame:Lerp(targetCFrame, smoothness3)
+        end
+    end
+end)
+
+-- 4. SCRIPT DE MOUSE LOCK (AIMBOT MOUSE)
+local fov4 = 50 
+local prediction4 = 0.12 
+local smoothness4 = 0.3 
+local lockedTarget4 = nil
+
+local RunService4 = game:GetService("RunService")
+local Players4 = game:GetService("Players")
+local UserInputService4 = game:GetService("UserInputService")
+local Cam4 = workspace.CurrentCamera
+
+local function randomizeTargetPart4(character)
+    if _G.FullHS then return character:FindFirstChild("Head") end
+    if math.random(1, 100) <= 50 then
+        return character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
+    else
+        return character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart")
+    end
+end
+
+local function getTargetUnderMouse4()
+    local nearest = nil
+    local shortestDist = math.huge
+    local mousePos = UserInputService4:GetMouseLocation()
+
+    for _, player in ipairs(Players4:GetPlayers()) do
+        if player ~= Players4.LocalPlayer and player.Character then
+            local part = player.Character:FindFirstChild("Torso") or player.Character:FindFirstChild("HumanoidRootPart")
+            if part then
+                local screenPos, onScreen = Cam4:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                    if dist < shortestDist and dist <= fov4 then
+                        shortestDist = dist
+                        nearest = player.Character
+                    end
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+RunService4.RenderStepped:Connect(function()
+    if _G.AimbotMode ~= "Mouse Lock (Mob & PC)" then return end
+    
+    local mousePos = UserInputService4:GetMouseLocation()
+    local targetChar = getTargetUnderMouse4()
+    
+    if targetChar then
+        if not lockedTarget4 or lockedTarget4.Parent ~= targetChar then
+            lockedTarget4 = randomizeTargetPart4(targetChar)
+        end
+    else
+        lockedTarget4 = nil
+    end
+
+    if lockedTarget4 and lockedTarget4.Parent and mousemoverel then
+        local predictedPos = lockedTarget4.Position + (lockedTarget4.Velocity * prediction4)
+        local targetPos = Cam4:WorldToViewportPoint(predictedPos)
+        local delta = Vector2.new(targetPos.X, targetPos.Y) - Vector2.new(mousePos.X, mousePos.Y)
+        mousemoverel(delta.X * smoothness4, delta.Y * smoothness4)
+    end
+end)
+
+-- 5. SCRIPT DE ESP (VISUAL)
+local RunService5 = game:GetService("RunService")
+local Players5 = game:GetService("Players")
+local Cam5 = workspace.CurrentCamera
+
+local function createESP5(player)
+    local highlight = Instance.new("Highlight")
+    highlight.Enabled = false
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0.1
+
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Center = true
+    text.Outline = true
+    text.Font = Drawing.Fonts.UI
+    text.Size = 13
+    text.Color = Color3.fromRGB(255, 255, 255)
+
+    local function applyToCharacter5(character)
+        if character then
+            highlight.Adornee = character
+            pcall(function() highlight.Parent = game:GetService("CoreGui") end)
+        end
+    end
+
+    player.CharacterAdded:Connect(applyToCharacter5)
+    if player.Character then applyToCharacter5(player.Character) end
+
+    local connection
+    connection = RunService5.RenderStepped:Connect(function()
+        if _G.ESPEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local headPos2d, onScreen = Cam5:WorldToViewportPoint(head.Position + Vector3.new(0, 1.5, 0))
+                if onScreen then
+                    text.Visible = true
+                    text.Position = Vector2.new(headPos2d.X, headPos2d.Y)
+                    text.Text = player.Name
+                else text.Visible = false end
+            else text.Visible = false end
+            
+            highlight.Enabled = true
+            highlight.FillColor = player.TeamColor and player.TeamColor.Color or Color3.fromRGB(255,255,255)
+            highlight.OutlineColor = highlight.FillColor
         else
             highlight.Enabled = false
-            label.Visible = false
+            text.Visible = false
+            if not player or not player.Parent then
+                pcall(function() highlight:Destroy() text:Remove() end)
+                connection:Disconnect()
+            end
         end
     end)
 end
 
-for _, p in pairs(Players:GetPlayers()) do if p ~= LP then applyESP(p) end end
-Players.PlayerAdded:Connect(applyESP)
+for _, p in pairs(Players5:GetPlayers()) do
+    if p ~= Players5.LocalPlayer then createESP5(p) end
+end
+Players5.PlayerAdded:Connect(function(p)
+    if p ~= Players5.LocalPlayer then createESP5(p) end
+end)
 
-Rayfield:Notify({Title = "Redfield Hub", Content = "Sistema Redfield Carregado (Full Power)", Duration = 5})
+Rayfield:Notify({Title = "Redfield Hub", Content = "Script Carregado!", Duration = 5})
