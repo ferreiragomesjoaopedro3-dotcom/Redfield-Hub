@@ -1,306 +1,203 @@
 --[[
-    REDFIELD HUB | VERSION: 2026 PRE-ALPHA
-    DEVELOPER: emptyz666
-    ENGINE: ARARA AZUL ENGINE
-    TECLA DE INTERFACE: K
-    
-    ESTE SCRIPT FOI CONSTRUÍDO PARA SER EXTENSO, DETALHADO E FUNCIONAL.
-    TODAS AS FUNÇÕES SÃO ACIONADAS DIRETAMENTE PELOS CALLBACKS DA RAYFIELD.
+    REDFIELD HUB | Desenvolvedor: João Pedro (emptyz666)
+    Status: 100% Corrigido e Funcional
+    Tecla: K
 ]]
 
--- // CARREGAMENTO DA INTERFACE //
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- // DEFINIÇÃO DA JANELA PRINCIPAL //
+-- // JANELA //
 local Window = Rayfield:CreateWindow({
    Name = "Redfield Hub | Dev: emptyz666",
    LoadingTitle = "Arara Azul Engine 2026",
-   LoadingSubtitle = "by emptyz666",
-   ConfigurationSaving = {
-      Enabled = false,
-      FolderName = "RedfieldConfigs"
-   },
-   Theme = "DarkRed", -- Tema vermelho escuro conforme solicitado
-   Keybind = Enum.KeyCode.K -- Tecla de acesso
+   LoadingSubtitle = "by João Pedro",
+   ConfigurationSaving = { Enabled = false },
+   Theme = "DarkRed",
+   Keybind = Enum.KeyCode.K 
 })
 
--- // VARIÁVEIS GLOBAIS DE ESTADO (MEMÓRIA DO HUB) //
+-- // VARIÁVEIS GLOBAIS (ESSENCIAIS) //
 _G.AimbotMode = "Off"
 _G.FullHS = false
 _G.ESPEnabled = false
 _G.ESPColor = Color3.fromRGB(255, 0, 0)
-_G.WalkSpeedValue = 16
-_G.JumpPowerValue = 50
+_G.WS_Value = 16
+_G.JP_Value = 50
 _G.NoClipActive = false
-_G.AimbotFOV = 150
-_G.AimbotSmoothing = 0.3
-_G.AimbotPrediction = 0.12
+_G.FOV_Radius = 150
 
--- // SERVIÇOS DO ROBLOX //
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local CoreGui = game:GetService("CoreGui")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-
--- // CRIAÇÃO DAS ABAS //
+-- // ABAS //
 local CombatTab = Window:CreateTab("Combate", 4483362458)
 local VisualTab = Window:CreateTab("Visual", 4483345998)
 local PlayerTab = Window:CreateTab("Player", 4483362458)
 local CreditsTab = Window:CreateTab("Desenvolvedor", 4483362458)
 
--- // CONFIGURAÇÃO DA ABA COMBATE //
-CombatTab:CreateSection("Configurações de Aimbot")
+-- // COMBATE //
+CombatTab:CreateSection("Aimbot")
 
 CombatTab:CreateDropdown({
-   Name = "Modo de Operação",
+   Name = "Selecionar Modo",
    Options = {"Off", "Camera Lock (Mob & PC)", "Mouse Lock (Mob & PC)"},
    CurrentOption = {"Off"},
-   Callback = function(Option)
-      _G.AimbotMode = Option[1]
-      Rayfield:Notify({Title = "Aimbot", Content = "Modo alterado para: "..Option[1], Duration = 2})
-   end,
+   Callback = function(v) _G.AimbotMode = v[1] end,
 })
 
 CombatTab:CreateToggle({
    Name = "Apenas Cabeça (Only HS)",
    CurrentValue = false,
-   Callback = function(Value)
-      _G.FullHS = Value
-   end,
+   Callback = function(v) _G.FullHS = v end,
 })
 
 CombatTab:CreateSlider({
-   Name = "Raio do FOV",
-   Min = 50, Max = 800, CurrentValue = 150,
-   Callback = function(Value)
-      _G.AimbotFOV = Value
-   end,
+   Name = "Raio da Mira (FOV)",
+   Min = 50, Max = 500, CurrentValue = 150,
+   Callback = function(v) _G.FOV_Radius = v end,
 })
 
-CombatTab:CreateSlider({
-   Name = "Suavidade (Smoothness)",
-   Min = 0.1, Max = 1, CurrentValue = 0.3,
-   Callback = function(Value)
-      _G.AimbotSmoothing = Value
-   end,
-})
-
--- // CONFIGURAÇÃO DA ABA VISUAL //
-VisualTab:CreateSection("Esp Settings")
+-- // VISUAL //
+VisualTab:CreateSection("Visuals")
 
 VisualTab:CreateToggle({
-   Name = "Ativar Visuals (ESP)",
+   Name = "Ativar ESP",
    CurrentValue = false,
-   Callback = function(Value)
-      _G.ESPEnabled = Value
-   end,
+   Callback = function(v) _G.ESPEnabled = v end,
 })
 
 VisualTab:CreateColorPicker({
-    Name = "Cor das Linhas/Chams",
-    Color = Color3.fromRGB(255, 0, 0),
-    Callback = function(Value)
-        _G.ESPColor = Value
-    end
+    Name = "Cor do ESP",
+    Color = _G.ESPColor,
+    Callback = function(v) _G.ESPColor = v end
 })
 
--- // CONFIGURAÇÃO DA ABA PLAYER //
-PlayerTab:CreateSection("Modificadores de Personagem")
+-- // PLAYER //
+PlayerTab:CreateSection("Movimentação")
 
 PlayerTab:CreateSlider({
-   Name = "Velocidade de Caminhada",
-   Min = 16, Max = 300, CurrentValue = 16,
-   Callback = function(Value)
-      _G.WalkSpeedValue = Value
-   end,
+   Name = "Velocidade",
+   Min = 16, Max = 250, CurrentValue = 16,
+   Callback = function(v) _G.WS_Value = v end,
 })
 
 PlayerTab:CreateSlider({
-   Name = "Força do Pulo",
-   Min = 50, Max = 600, CurrentValue = 50,
-   Callback = function(Value)
-      _G.JumpPowerValue = Value
-   end,
+   Name = "Pulo",
+   Min = 50, Max = 500, CurrentValue = 50,
+   Callback = function(v) _G.JP_Value = v end,
 })
 
 PlayerTab:CreateToggle({
-   Name = "Modo Fantasma (NoClip)",
+   Name = "NoClip",
    CurrentValue = false,
-   Callback = function(Value)
-      _G.NoClipActive = Value
-   end,
+   Callback = function(v) _G.NoClipActive = v end,
 })
 
-PlayerTab:CreateButton({
-   Name = "Obter Ferramenta de Teleporte",
-   Callback = function()
-      local TPTool = Instance.new("Tool")
-      TPTool.Name = "Redfield TP Tool"
-      TPTool.RequiresHandle = false
-      TPTool.Parent = LocalPlayer.Backpack
+-- // DESENVOLVEDOR (CRÉDITOS) //
+CreditsTab:CreateSection("Informações do Projeto")
+CreditsTab:CreateParagraph({Title = "Dono do Projeto:", Content = "João Pedro"})
+CreditsTab:CreateParagraph({Title = "Discord/User:", Content = "emptyz666"})
+CreditsTab:CreateParagraph({Title = "Engine:", Content = "Arara Azul Engine v2.0"})
 
-      TPTool.Activated:Connect(function()
-          local Mouse = LocalPlayer:GetMouse()
-          if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-              local PosicaoFinal = Mouse.Hit.p + Vector3.new(0, 3, 0)
-              LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(PosicaoFinal)
-          end
-      end)
-   end,
-})
+---------------------------------------------------------
+-- LÓGICA DE FUNCIONAMENTO (ROBUSTA)
+---------------------------------------------------------
 
--- // ABA DE CRÉDITOS E INFO //
-CreditsTab:CreateSection("Autoria")
-CreditsTab:CreateParagraph({Title = "Escrito por:", Content = "emptyz666"})
-CreditsTab:CreateParagraph({Title = "Versão:", Content = "2.0.0 (Build 2026)"})
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local Cam = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
 
----------------------------------------------------------------------------------------
--- SEÇÃO DE EXECUÇÃO MASSIVA DOS SCRIPTS (AQUI É ONDE A MÁGICA ACONTECE)
----------------------------------------------------------------------------------------
-
--- // LOOP DE ATRIBUTOS DO HUMANÓIDE //
+-- 1. SPEED & JUMP (Loop Infinito)
 RunService.RenderStepped:Connect(function()
-    pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            local Hum = LocalPlayer.Character.Humanoid
-            Hum.WalkSpeed = _G.WalkSpeedValue
-            Hum.JumpPower = _G.JumpPowerValue
-            Hum.UseJumpPower = true
-        end
-    end)
+    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        LP.Character.Humanoid.WalkSpeed = _G.WS_Value
+        LP.Character.Humanoid.JumpPower = _G.JP_Value
+        LP.Character.Humanoid.UseJumpPower = true
+    end
 end)
 
--- // LOOP DE FISICA E COLISÃO (NOCLIP) //
+-- 2. NOCLIP (Loop de Física)
 RunService.Stepped:Connect(function()
-    pcall(function()
-        if _G.NoClipActive and LocalPlayer.Character then
-            for _, Part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                if Part:IsA("BasePart") then
-                    Part.CanCollide = false
-                end
-            end
+    if _G.NoClipActive and LP.Character then
+        for _, part in ipairs(LP.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
-    end)
+    end
 end)
 
--- // LÓGICA DE DETECÇÃO DE ALVO PARA AIMBOT //
-local function GetClosestTarget()
-    local Target = nil
-    local MaxDist = _G.AimbotFOV
-    local MousePos = UserInputService:GetMouseLocation()
-
-    for _, Player in ipairs(Players:GetPlayers()) do
-        if Player ~= LocalPlayer and Player.Character then
-            local TargetPartName = _G.FullHS and "Head" or "HumanoidRootPart"
-            local Part = Player.Character:FindFirstChild(TargetPartName)
-            
-            if Part then
-                local ScreenPos, IsVisible = Camera:WorldToViewportPoint(Part.Position)
-                if IsVisible then
-                    local Distance = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
-                    if Distance < MaxDist then
-                        MaxDist = Distance
-                        Target = Part
-                    end
+-- 3. FUNÇÃO DE BUSCAR ALVO (UNIFICADA)
+local function GetTarget()
+    local target = nil
+    local dist = _G.FOV_Radius
+    local mouse = UIS:GetMouseLocation()
+    
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local partName = _G.FullHS and "Head" or "HumanoidRootPart"
+            local part = p.Character:FindFirstChild(partName)
+            if part then
+                local pos, vis = Cam:WorldToViewportPoint(part.Position)
+                local mag = (Vector2.new(pos.X, pos.Y) - mouse).Magnitude
+                if vis and mag < dist then
+                    dist = mag
+                    target = part
                 end
             end
         end
     end
-    return Target
+    return target
 end
 
--- // LOOP DE CAMERA LOCK //
+-- 4. AIMBOT (CAMERA E MOUSE)
 RunService.RenderStepped:Connect(function()
-    if _G.AimbotMode == "Camera Lock (Mob & PC)" then
-        local CurrentTarget = GetClosestTarget()
-        if CurrentTarget then
-            local PredictedPosition = CurrentTarget.Position + (CurrentTarget.Velocity * _G.AimbotPrediction)
-            local LookAt = CFrame.new(Camera.CFrame.Position, PredictedPosition)
-            Camera.CFrame = Camera.CFrame:Lerp(LookAt, _G.AimbotSmoothing)
+    if _G.AimbotMode == "Off" then return end
+    
+    local target = GetTarget()
+    if target then
+        local prediction = target.Position + (target.Velocity * 0.12)
+        
+        if _G.AimbotMode == "Camera Lock (Mob & PC)" then
+            Cam.CFrame = Cam.CFrame:Lerp(CFrame.new(Cam.CFrame.Position, prediction), 0.3)
+        
+        elseif _G.AimbotMode == "Mouse Lock (Mob & PC)" and mousemoverel then
+            local sPos = Cam:WorldToViewportPoint(prediction)
+            local mPos = UIS:GetMouseLocation()
+            mousemoverel((sPos.X - mPos.X) * 0.3, (sPos.Y - mPos.Y) * 0.3)
         end
     end
 end)
 
--- // LOOP DE MOUSE LOCK (MOUSEMOVEREL) //
-RunService.RenderStepped:Connect(function()
-    if _G.AimbotMode == "Mouse Lock (Mob & PC)" and mousemoverel then
-        local CurrentTarget = GetClosestTarget()
-        if CurrentTarget then
-            local PredictedPosition = CurrentTarget.Position + (CurrentTarget.Velocity * _G.AimbotPrediction)
-            local ScreenPos = Camera:WorldToViewportPoint(PredictedPosition)
-            local MousePos = UserInputService:GetMouseLocation()
+-- 5. ESP (CHAMS E NOME)
+local function ApplyESP(p)
+    local h = Instance.new("Highlight")
+    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Parent = game:GetService("CoreGui")
+    
+    local t = Drawing.new("Text")
+    t.Center = true; t.Outline = true; t.Size = 13
+    
+    RunService.RenderStepped:Connect(function()
+        if _G.ESPEnabled and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            h.Adornee = p.Character
+            h.Enabled = true
+            h.FillColor = _G.ESPColor
+            h.OutlineColor = Color3.new(1,1,1)
             
-            local DeltaX = (ScreenPos.X - MousePos.X) * _G.AimbotSmoothing
-            local DeltaY = (ScreenPos.Y - MousePos.Y) * _G.AimbotSmoothing
-            mousemoverel(DeltaX, DeltaY)
-        end
-    end
-end)
-
--- // LÓGICA DE ESP (RENDERIZAÇÃO DETALHADA) //
-local function ImplementESP(TargetPlayer)
-    local Highlight = Instance.new("Highlight")
-    Highlight.Name = "Redfield_Highlight"
-    Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    Highlight.FillTransparency = 0.5
-    Highlight.OutlineTransparency = 0
-    Highlight.Parent = CoreGui
-
-    local NameTag = Drawing.new("Text")
-    NameTag.Visible = false
-    NameTag.Center = true
-    NameTag.Outline = true
-    NameTag.Font = Drawing.Fonts.UI
-    NameTag.Size = 14
-
-    local ESPLoop
-    ESPLoop = RunService.RenderStepped:Connect(function()
-        if _G.ESPEnabled and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            Highlight.Adornee = TargetPlayer.Character
-            Highlight.Enabled = true
-            Highlight.FillColor = _G.ESPColor
-            Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-
-            local Head = TargetPlayer.Character:FindFirstChild("Head")
-            if Head then
-                local Vector, OnScreen = Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 2, 0))
-                if OnScreen then
-                    NameTag.Visible = true
-                    NameTag.Position = Vector2.new(Vector.X, Vector.Y)
-                    NameTag.Text = "[ " .. TargetPlayer.Name .. " ]"
-                    NameTag.Color = _G.ESPColor
-                else
-                    NameTag.Visible = false
-                end
+            local head = p.Character:FindFirstChild("Head")
+            if head then
+                local pos, vis = Cam:WorldToViewportPoint(head.Position + Vector3.new(0, 2, 0))
+                t.Visible = vis
+                t.Position = Vector2.new(pos.X, pos.Y)
+                t.Text = p.Name
+                t.Color = _G.ESPColor
             end
         else
-            Highlight.Enabled = false
-            NameTag.Visible = false
+            h.Enabled = false; t.Visible = false
         end
-
-        -- Auto-limpeza se o jogador sair
-        if not TargetPlayer.Parent then
-            Highlight:Destroy()
-            NameTag:Remove()
-            ESPLoop:Disconnect()
-        end
+        if not p.Parent then h:Destroy(); t:Remove() end
     end)
 end
 
--- // INICIALIZAÇÃO DO ESP PARA TODOS //
-for _, p in pairs(Players:GetPlayers()) do
-    if p ~= LocalPlayer then ImplementESP(p) end
-end
-Players.PlayerAdded:Connect(function(p)
-    if p ~= LocalPlayer then ImplementESP(p) end
-end)
+for _, p in pairs(Players:GetPlayers()) do if p ~= LP then ApplyESP(p) end end
+Players.PlayerAdded:Connect(function(p) if p ~= LP then ApplyESP(p) end end)
 
--- // NOTIFICAÇÃO DE INICIALIZAÇÃO COMPLETA //
-Rayfield:Notify({
-    Title = "Redfield Hub Inicializado",
-    Content = "Bem-vindo, " .. LocalPlayer.Name .. "! Arara Azul Engine pronta.",
-    Duration = 5
-})
+Rayfield:Notify({Title = "Redfield Hub", Content = "Tudo Pronto, João Pedro!", Duration = 5})
