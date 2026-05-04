@@ -1,20 +1,20 @@
 --[[
-    REDFIELD HUB v2.0 - MEGA SCRIPT
+    REDFIELD HUB v2.0 - FULL RELEASE
     Desenvolvedor: emptyz666 (Arara Azul Engine)
-    Foco: Multi-plataforma (PC/Mobile) & Performance
+    Foco: Performance (Zorin OS / Intel HD 520) e Full Exploits
 ]]
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- // SERVIÇOS DO SISTEMA //
+-- // SERVIÇOS DO ROBLOX //
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local Cam = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 
--- // VARIÁVEIS DE CONTROLE //
-_G.AimbotMode = "Off" -- Off, Camera Lock (Mob/PC), Mouse Lock (Mob/PC)
+-- // CONFIGURAÇÕES GLOBAIS //
+_G.AimbotMode = "Off" 
 _G.FullHS = false
 _G.Wallbang = false
 _G.Prediction = 0.12
@@ -22,34 +22,35 @@ _G.Smoothness = 0.3
 _G.FOV = 50
 
 _G.ESPEnabled = true
-_G.ESPColorMode = "Team" -- Team ou Custom
-_G.CustomColor = Color3.fromRGB(255, 255, 255)
+_G.ESPColorMode = "Team Color"
+_G.CustomColor = Color3.fromRGB(255, 0, 0)
 _G.ShowTools = false
 
 _G.WalkSpeed = 16
 _G.JumpPower = 50
 _G.NoClip = false
 
--- // JANELA PRINCIPAL //
+-- // CRIAÇÃO DA INTERFACE (TEMA VERMELHO) //
 local Window = Rayfield:CreateWindow({
    Name = "Redfield Hub | Dev: emptyz666",
    LoadingTitle = "Arara Azul Engine 2026",
    LoadingSubtitle = "by emptyz666",
-   ConfigurationSaving = { Enabled = true, FolderName = "Redfield_Data" }
+   ConfigurationSaving = { Enabled = false },
+   Theme = "DarkRed" 
 })
 
 -- // ABA: COMBATE //
 local CombatTab = Window:CreateTab("Combate", 4483362458)
 
 CombatTab:CreateDropdown({
-   Name = "Aimbot / Lock-on",
+   Name = "Modo Aimbot (Lock-on)",
    Options = {"Off", "Camera Lock (Mob & PC)", "Mouse Lock (Mob & PC)"},
    CurrentOption = {"Off"},
    Callback = function(v) _G.AimbotMode = v[1] end,
 })
 
 CombatTab:CreateToggle({
-   Name = "Full Headshot (100% HS)",
+   Name = "Full Headshot (HS)",
    CurrentValue = false,
    Callback = function(v) _G.FullHS = v end,
 })
@@ -60,7 +61,13 @@ CombatTab:CreateToggle({
    Callback = function(v) _G.Wallbang = v end,
 })
 
--- // ABA: VISUAL (SEU ESP) //
+CombatTab:CreateSlider({
+   Name = "Raio da Mira (FOV)",
+   Min = 10, Max = 500, CurrentValue = 50,
+   Callback = function(v) _G.FOV = v end,
+})
+
+-- // ABA: VISUAL (SEU ESP ORIGINAL) //
 local VisualTab = Window:CreateTab("Visual", 4483345998)
 
 VisualTab:CreateToggle({
@@ -70,7 +77,7 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateDropdown({
-   Name = "Cor do ESP",
+   Name = "Tipo de Cor",
    Options = {"Team Color", "Custom Color"},
    CurrentOption = {"Team Color"},
    Callback = function(v) _G.ESPColorMode = v[1] end,
@@ -78,7 +85,7 @@ VisualTab:CreateDropdown({
 
 VisualTab:CreateColorPicker({
     Name = "Escolher Cor Custom",
-    Color = Color3.fromRGB(255, 255, 255),
+    Color = Color3.fromRGB(255, 0, 0),
     Callback = function(v) _G.CustomColor = v end
 })
 
@@ -88,67 +95,67 @@ VisualTab:CreateToggle({
    Callback = function(v) _G.ShowTools = v end,
 })
 
--- // ABA: PLAYER //
+-- // ABA: PLAYER (ESTATÍSTICAS) //
 local PlayerTab = Window:CreateTab("Player", 4483362458)
 
 PlayerTab:CreateSlider({
-   Name = "Velocidade (Studs)",
-   Min = 1, Max = 100, CurrentValue = 16,
+   Name = "Velocidade (WalkSpeed)",
+   Min = 16, Max = 100, CurrentValue = 16,
    Callback = function(v) _G.WalkSpeed = v end,
 })
 
 PlayerTab:CreateSlider({
-   Name = "Pulo",
+   Name = "Pulo (JumpPower)",
    Min = 50, Max = 300, CurrentValue = 50,
    Callback = function(v) _G.JumpPower = v end,
 })
 
 PlayerTab:CreateToggle({
-   Name = "NoClip (Atravessar Tudo)",
+   Name = "Ativar NoClip",
    CurrentValue = false,
    Callback = function(v) _G.NoClip = v end,
 })
 
 PlayerTab:CreateButton({
-   Name = "Dar Teleport Tool (Clique para TP)",
+   Name = "Ganhar Teleport Tool",
    Callback = function()
        local Tool = Instance.new("Tool")
        Tool.RequiresHandle = false
-       Tool.Name = "Teleport Tool"
+       Tool.Name = "Teleport Tool (Redfield)"
        Tool.Activated:Connect(function()
            local pos = LP:GetMouse().Hit.Position
-           LP.Character:MoveTo(pos + Vector3.new(0, 3, 0))
+           if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then 
+               LP.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0)) 
+           end
        end)
        Tool.Parent = LP.Backpack
+       Rayfield:Notify({Title = "Redfield Hub", Content = "Ferramenta de TP dada com sucesso!"})
    end,
 })
 
 ---------------------------------------------------------
--- LÓGICA DO AIMBOT (BASEADA NO SEU CÓDIGO)
+-- LÓGICA DO AIMBOT (SEU SCRIPT)
 ---------------------------------------------------------
-local lockedTarget = nil
-
 local function getTarget()
     local nearest = nil
     local shortestDist = _G.FOV
     local mousePos = UserInputService:GetMouseLocation()
 
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LP and player.Character then
+        if player ~= LP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            -- Wallbang logic
             if not _G.Wallbang then
                 local parts = Cam:GetPartsObscuringTarget({player.Character.HumanoidRootPart.Position}, {LP.Character, player.Character})
                 if #parts > 0 then continue end
             end
 
-            local root = player.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                local pos, onScreen = Cam:WorldToViewportPoint(root.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                    if dist < shortestDist then
-                        shortestDist = dist
-                        nearest = player.Character
-                    end
+            local root = player.Character.HumanoidRootPart
+            local pos, onScreen = Cam:WorldToViewportPoint(root.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    nearest = player.Character
                 end
             end
         end
@@ -157,10 +164,11 @@ local function getTarget()
 end
 
 RunService.RenderStepped:Connect(function()
-    -- Lógica Player (Speed/Jump/Noclip)
+    -- Loop Player (Speed/Jump/Noclip)
     if LP.Character and LP.Character:FindFirstChild("Humanoid") then
         LP.Character.Humanoid.WalkSpeed = _G.WalkSpeed
         LP.Character.Humanoid.JumpPower = _G.JumpPower
+        LP.Character.Humanoid.UseJumpPower = true
         if _G.NoClip then
             for _, part in pairs(LP.Character:GetDescendants()) do
                 if part:IsA("BasePart") then part.CanCollide = false end
@@ -168,32 +176,32 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Lógica Aimbot
+    -- Loop Aimbot
     if _G.AimbotMode == "Off" then return end
     
     local targetChar = getTarget()
     if targetChar then
-        local partName = _G.FullHS and "Head" or (math.random(1,100) <= 50 and "Head" or "Torso")
-        lockedTarget = targetChar:FindFirstChild(partName) or targetChar:FindFirstChild("HumanoidRootPart")
+        local partName = _G.FullHS and "Head" or (math.random(1, 100) <= 50 and "Head" or "HumanoidRootPart")
+        local lockedPart = targetChar:FindFirstChild(partName)
         
-        if lockedTarget then
-            local predictedPos = lockedTarget.Position + (lockedTarget.Velocity * _G.Prediction)
+        if lockedPart then
+            local predPos = lockedPart.Position + (lockedPart.Velocity * _G.Prediction)
             
             if _G.AimbotMode == "Mouse Lock (Mob & PC)" then
-                local sPos = Cam:WorldToViewportPoint(predictedPos)
+                local sPos = Cam:WorldToViewportPoint(predPos)
                 local mousePos = UserInputService:GetMouseLocation()
                 if mousemoverel then
                     mousemoverel((sPos.X - mousePos.X) * _G.Smoothness, (sPos.Y - mousePos.Y) * _G.Smoothness)
                 end
             elseif _G.AimbotMode == "Camera Lock (Mob & PC)" then
-                Cam.CFrame = CFrame.new(Cam.CFrame.Position, predictedPos)
+                Cam.CFrame = CFrame.new(Cam.CFrame.Position, predPos)
             end
         end
     end
 end)
 
 ---------------------------------------------------------
--- LÓGICA DO ESP (SEU CÓDIGO ORIGINAL MODIFICADO)
+-- LÓGICA DO ESP (SEU SCRIPT ORIGINAL)
 ---------------------------------------------------------
 local function createESP(player)
     local highlight = Instance.new("Highlight", game:GetService("CoreGui"))
@@ -209,11 +217,12 @@ local function createESP(player)
                 highlight.Enabled = true
                 highlight.Adornee = player.Character
                 highlight.FillColor = (_G.ESPColorMode == "Team Color" and player.TeamColor) and player.TeamColor.Color or _G.CustomColor
+                highlight.OutlineColor = highlight.FillColor
                 
                 text.Visible = true
                 text.Position = Vector2.new(pos.X, pos.Y - 30)
                 local tool = player.Character:FindFirstChildOfClass("Tool")
-                text.Text = player.Name .. (_G.ShowTools and (tool and "\n["..tool.Name.."]" or "\n[Nenhum]") or "")
+                text.Text = player.Name .. (_G.ShowTools and (tool and "\n["..tool.Name.."]" or "\n[Vazio]") or "")
                 text.Color = highlight.FillColor
             else
                 highlight.Enabled, text.Visible = false, false
@@ -224,8 +233,7 @@ local function createESP(player)
     end)
 end
 
--- Inicialização Final
 for _, p in pairs(Players:GetPlayers()) do if p ~= LP then createESP(p) end end
 Players.PlayerAdded:Connect(createESP)
 
-Rayfield:Notify({Title = "Redfield Hub", Content = "Desenvolvedor: emptyz666 Carregado!", Duration = 5})
+Rayfield:Notify({Title = "Redfield Hub", Content = "Script de emptyz666 Completo!", Duration = 5})
